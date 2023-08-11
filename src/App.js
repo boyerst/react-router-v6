@@ -1,6 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, Link, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Outlet, useParams } from 'react-router-dom';
 
 
 const BlogPosts = {
@@ -57,6 +57,7 @@ function App() {
           <Route path="/" element={<Home />}/>
           <Route path="/posts" element={<Posts />}>
             <Route index element={<PostLists />} />
+            <Route path=":slug" element={<Post />} />
           </Route>  
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NoMatch />} />
@@ -93,13 +94,35 @@ function PostLists() {
     <ul>
       {Object.entries(BlogPosts).map(([slug, { title }]) => (
         <li key={slug}>
-          <h3>{title}</h3>
+          <Link to={`/posts/${slug}`}>
+            <h3>{title}</h3>
+          </Link>
         </li>
       ))}
     </ul>
   );
 }
 
+
+function Post() {
+  // Use useParams() hook to access dynamic parameters that the route (or slug in our case) has
+    // In this case the dynamic parameters are the title and description
+  const { slug } = useParams();
+  console.log(slug)
+  const post = BlogPosts[slug];
+  console.log(post)
+  if(!post) {
+    return <span>Post does not exist</span>
+  }
+  // Deconstruct contents of post var
+  const { title, description } = post;
+  return (
+    <div style={{ padding: 20 }}>
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </div>
+  );
+}
 
 
 
