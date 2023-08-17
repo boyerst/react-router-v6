@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
-import { BrowserRouter as Router, Route, Link, Outlet, useParams, useRoutes } from 'react-router-dom';
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, Outlet, Navigate, useParams, useNavigate } from 'react-router-dom';
 
 
 const BlogPosts = {
@@ -25,6 +26,7 @@ function NoMatch() {
   );
 }
 
+
 function Home() {
   return (
     <div style={{ padding: 20 }}>
@@ -35,7 +37,10 @@ function Home() {
 }
 
 
-// ROUTE CONFIG USE COMPONENTS
+
+
+
+// ROUTE CONFIG #1 - USING COMPONENTS
 // function App() {
 //   return (
 //     <div className="App">
@@ -70,28 +75,90 @@ function Home() {
 // }
 
 
-// ROUTE CONFIG USE HOOK
+// ROUTE CONFIG #2 - USING HOOK
+  // This separates the routing logic to Router as follows
 
-function Routes() {
-  const element = useRoutes([
-    { path: "/", element: <Home/> },
-    { path: "/posts",
-      element: <Posts/>,
-      children: [
-        { index: true, element: <PostLists/> },
-        { path: ":slug", element: <Post/> }
-      ],
-    },
-    { path: "/about", element: <About/> },
-    { path: "*", element: <NoMatch/>}
-  ]);
-  return element;
+// function Routes() {
+//   const element = useRoutes([
+//     { path: "/", element: <Home/> },
+//     { path: "/posts",
+//       element: <Posts/>,
+//       children: [
+//         { index: true, element: <PostLists/> },
+//         { path: ":slug", element: <Post/> }
+//       ],
+//     },
+//     { path: "/about", element: <About/> },
+//     { path: "*", element: <NoMatch/>}
+//   ]);
+//   return element;
+// }
+
+
+// function App() {
+//   return (
+//     <Router>
+//       <nav style={{ margin: 10 }}>
+//           <Link to="/" style={{ padding: 5 }}>
+//           Home
+//           </Link>
+//           <Link to="/posts" style={{ padding: 5 }}>
+//           Posts
+//           </Link>
+//           <Link to="/about" style={{ padding: 5 }}>
+//           About
+//           </Link>
+//       </nav>
+//       <Routes/>
+//     </Router>
+//   );
+// }
+
+
+
+// ROUTE CONFIG #3 - USING AUTH
+
+function Login({ onLogin }) {
+  const [creds, setCreds] = useState({});
+  const navigate = useNavigate();
+
+  function handleLogin() {
+    // For demonstration purposes only. Never use these checks in production!
+    // Use a proper authentication implementation
+    if(creds.username === 'admin' && creds.password === '123') {
+      onLogin && onLogin({username: creds.username});
+      navigate('/stats');
+    }
+  }
+  return (
+    <div style={{ padding: 10 }}>
+      <br/>
+      <span>Username:</span><br/>
+      <input
+        type="text"
+        onChange={(e) => setCreds({...creds, username: e.target.value})}/><br/>
+      <span>Password:</span><br/>
+      <input
+        type="password"
+        onChange={(e) => setCreds({...creds, password: e.target.value})}/><br/><br/>
+      <button onClick={handleLogin}>Login</button>
+    </div>
+  );
 }
 
 
-function App() {
+
+function AppLayout() {
+  const [user, setUser] = useState();
+  const navigate = useNavigate();
+
+  function logOut() {
+    setUser(null);
+    navigate("/");
+  }
+
   return (
-    <Router>
+    <>
       <nav style={{ margin: 10 }}>
           <Link to="/" style={{ padding: 5 }}>
           Home
@@ -102,11 +169,40 @@ function App() {
           <Link to="/about" style={{ padding: 5 }}>
           About
           </Link>
+          <span> | </span>
+          { user && <Link to="/stats" style={{ padding: 5 }}>
+          Stats
+          </Link> }
+          { !user && <Link to="/login" style={{ padding: 5 }}>
+          Login
+          </Link> }
+          { user && <span onClick={logOut} style={{ padding: 5, cursor: 'pointer' }}>
+          Logout
+          </span> }
       </nav>
-      <Routes/>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/posts" element={<Posts />}>
+          <Route index element={<PostLists />} />
+          <Route path=":slug" element={<Post />} />
+        </Route>
+        <Route path="/about" element={<About />} />
+        <Route path="/login" element={<Login onLogin={setUser}/>} />
+        <Route path="/stats" element={<Stats user={user}/>} />
+        <Route path="*" element={<NoMatch />} />
+      </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+        <AppLayout/>
     </Router>
   );
 }
+
 
 
 
@@ -156,10 +252,10 @@ function Post() {
     // slug here will be the route...either
       // first-blog-post OR second-blog-post
   const { slug } = useParams();
-  console.log(slug)
+  console.log("slug: ", slug)
   // Then we access the nested post objects within BlogPosts object using bracket notations
   const post = BlogPosts[slug];
-  console.log(post)
+  console.log("post: ", post)
   if(!post) {
     return <span>Post does not exist</span>
   }
@@ -174,7 +270,21 @@ function Post() {
 }
 
 
+function Stats({ user }) {
 
+  if(!user) {
+    return (
+      <Navigate to="/login" replace/>
+    );
+  }
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Stats View</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adip.</p>
+    </div>
+  );
+}
 
 
 
